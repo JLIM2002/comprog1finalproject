@@ -1,0 +1,195 @@
+import javax.swing.*;
+import java.time.LocalDate;
+import java.time.Year;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+
+	public class ResortBookingApplicationLimV1
+	{
+   		public static void main(String [] args) 
+   		{
+
+			String location, name, pwdAssistanceInfo, dateInMonth, dateOutMonth, checkInDetails, checkOutDetails;
+			int pwdAssistance, checkInMonthNumber, checkInDayNumber, checkInYearNumber, checkOutMonthNumber, checkOutDayNumber, checkOutYearNumber, ctr, childrenCount, book, guestStaying;
+
+
+            book = JOptionPane.YES_OPTION;
+			location = "";
+			dateInMonth = "";
+			dateOutMonth = "";
+			checkInMonthNumber = 0;
+			checkOutMonthNumber = 0;
+			checkInDayNumber = 0;
+			checkOutDayNumber = 0;
+			checkInYearNumber = 0;
+			checkOutYearNumber = 0;
+			ctr = 0;
+			checkInDetails = "";
+			checkOutDetails = "";
+            name = "";
+            guestStaying = 0;
+
+			//Calendar checkInDate;
+			
+///			LocalDate today = LocalDate.now();
+			String dateIn = null, dateOut = null;
+			int currentYear = Year.now().getValue();
+///			LocalDate bookingDate = LocalDate.of(year, monthNumber, dayNumber);
+
+
+			//input
+			//ASK FOR THE LOCATION OF CHECK IN
+			//CHECK IN
+			
+			while (book == JOptionPane.YES_OPTION) {
+				boolean validLocation = false;
+					JOptionPane.showMessageDialog(null, "Lanlya Star Hotel Booking");
+					
+				while (!validLocation) {
+					location = JOptionPane.showInputDialog(null, "Where would you like to go?\nSupported Locations:\nLocal:        International:\nBaguio      Hongkong\nBoracay     Japan\nEl Nido     Singapore\nSiargao     South Korea", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE);
+			
+
+					//CANCEL BUTTON
+					if (location == null) {
+						break;
+					}
+			
+					switch (location.toLowerCase()) {
+						case "baguio":
+						case "boracay":
+						case "el nido":
+						case "siargao":
+						case "hong kong":
+						case "japan":
+						case "singapore":
+						case "south korea":
+							validLocation = true;
+							break;
+						default:
+							JOptionPane.showMessageDialog(null, "Invalid location. Please choose a valid destination.");
+					}
+				}
+			
+				if (!validLocation) {
+					break; // exit the booking loop if user cancels
+				}
+			
+				// Continue with booking logic for the chosen valid location
+				// ...
+			}
+			
+			
+			//Asks for the date for checking in
+			//MONTH
+				do {
+					   checkInMonthNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What month will you check in? (Enter a number 1-12)", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE));
+				} while (checkInMonthNumber < 1 || checkInMonthNumber > 12);
+			
+					switch (checkInMonthNumber)
+					{
+						case 1:  dateInMonth = "January"; break;
+						case 2:  dateInMonth = "February"; break;
+						case 3:  dateInMonth = "March"; break;
+						case 4:  dateInMonth = "April"; break;
+						case 5:  dateInMonth = "May"; break;
+						case 6:  dateInMonth = "June"; break;
+						case 7:  dateInMonth = "July"; break;
+						case 8:  dateInMonth = "August"; break;
+						case 9:  dateInMonth = "September"; break;
+						case 10: dateInMonth = "October"; break;
+						case 11: dateInMonth = "November"; break;
+						case 12: dateInMonth = "December"; break;
+						default: 
+							JOptionPane.showMessageDialog(null, "Invalid input! Please enter a number between 1 and 12.");
+							checkInMonthNumber = 0;	
+					}
+
+			//DAY
+
+				while (checkInDayNumber < 1 || checkInDayNumber > 31) 
+				{
+					checkInDayNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What day you check in? (Enter a number 1-31)", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE));
+				}
+
+
+			//YEAR
+
+				while (checkInYearNumber < currentYear || checkInYearNumber > 2035)
+				{
+					checkInYearNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What year will you check in? "));
+				}
+			
+				//CHECK OUT
+
+				while (checkOutMonthNumber < 1 || checkOutMonthNumber > 12) 
+				{
+					checkOutMonthNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What month will you check out? (Enter a number 1-12)", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE));
+				}
+
+
+		 		switch (checkOutMonthNumber)
+				{
+					 case 1:  dateOutMonth = "January"; break;
+					 case 2:  dateOutMonth = "February"; break;
+					 case 3:  dateOutMonth = "March"; break;
+					 case 4:  dateOutMonth = "April"; break;
+					 case 5:  dateOutMonth = "May"; break;
+					 case 6:  dateOutMonth = "June"; break;
+					 case 7:  dateOutMonth = "July"; break;
+					 case 8:  dateOutMonth = "August"; break;
+					 case 9:  dateOutMonth = "September"; break;
+					 case 10: dateOutMonth = "October"; break;
+					 case 11: dateOutMonth = "November"; break;
+					 case 12: dateOutMonth = "December"; break;
+					 default: 
+						 JOptionPane.showMessageDialog(null, "Invalid input! Please enter a number between 1 and 12.");
+						 checkOutMonthNumber = 0;	
+				}
+
+		 
+		//DAY
+
+			while (checkOutDayNumber < 1 || checkOutDayNumber > 31) {
+				checkOutDayNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What day will you check out? (Enter a number 1-31)", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE));}
+
+
+		//YEAR
+
+			while (checkOutYearNumber < currentYear || checkOutYearNumber > 2035){
+				checkOutYearNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What year will you check out? "));
+			}
+
+
+			//Asks for the staying Guests
+
+			guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying? "));
+			childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null,"Are there any children? "));
+
+		    if(childrenCount >= 1)
+		    {
+		    	System.out.println("What is the age(s) of your child/children?");
+		    }
+
+			pwdAssistance = JOptionPane.showConfirmDialog(null,"Does any guest need Special need assistance? (PWD) ");		//Asks for any pwd 
+			name = JOptionPane.showInputDialog(null, "What is your name? ");
+			JOptionPane.showMessageDialog(null, "Welcome to Hotel Transelvania. Please enjoy your Stay <3");
+			pwdAssistanceInfo = "No response provided";
+            pwdAssistance = 0;
+			if (pwdAssistance == 0) 
+			{
+				pwdAssistanceInfo = "Assisting your room for pwd assistance";
+			}
+			
+			if (pwdAssistance == 1)
+			{
+				pwdAssistanceInfo = "Without any need of special assistance";
+			}
+			
+			//output
+			JOptionPane.showMessageDialog(null, "Hello, Welcome to Hotel Tanselvania " + name + 
+			"\n You would like to go to " + location + " on " + dateIn + " and leave on " + dateOut + " with " + guestStaying
+			+ "\n guest staying with " + childrenCount + " children. " + pwdAssistanceInfo + ".");
+     	}
+	}
