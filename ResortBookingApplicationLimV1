@@ -12,7 +12,7 @@ import java.util.Calendar;
    		{
 
 			String location, name, pwdAssistanceInfo, dateInMonth, dateOutMonth, checkInDetails, checkOutDetails;
-			int pwdAssistance, checkInMonthNumber, checkInDayNumber, checkInYearNumber, checkOutMonthNumber, checkOutDayNumber, checkOutYearNumber, ctr, childrenCount, book, guestStaying;
+			int pwdAssistance, checkInMonthNumber, checkInDayNumber, checkInYearNumber, checkOutMonthNumber, checkOutDayNumber, checkOutYearNumber, ctr, childrenCount, book, guestStaying, adultChild, minorChild, childrenAge, checkInConfirmation;
 
 
             book = JOptionPane.YES_OPTION;
@@ -30,6 +30,10 @@ import java.util.Calendar;
 			checkOutDetails = "";
             name = "";
             guestStaying = 0;
+			childrenAge = 0;
+			adultChild = 0; 
+			minorChild = 0;
+			checkInConfirmation = -2;
 
 			//Calendar checkInDate;
 			
@@ -42,11 +46,12 @@ import java.util.Calendar;
 			//input
 			//ASK FOR THE LOCATION OF CHECK IN
 			//CHECK IN
-			
+			book = JOptionPane.showConfirmDialog(null, "Would you like to book");
+
+
 			while (book == JOptionPane.YES_OPTION) {
 				boolean validLocation = false;
-					JOptionPane.showMessageDialog(null, "Lanlya Star Hotel Booking");
-					
+						
 				while (!validLocation) {
 					location = JOptionPane.showInputDialog(null, "Where would you like to go?\nSupported Locations:\nLocal:        International:\nBaguio      Hongkong\nBoracay     Japan\nEl Nido     Singapore\nSiargao     South Korea", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE);
 			
@@ -66,26 +71,20 @@ import java.util.Calendar;
 						case "singapore":
 						case "south korea":
 							validLocation = true;
+							JOptionPane.showMessageDialog(null, "You have selected: " + location);
 							break;
 						default:
 							JOptionPane.showMessageDialog(null, "Invalid location. Please choose a valid destination.");
 					}
 				}
-			
-				if (!validLocation) {
-					break; // exit the booking loop if user cancels
-				}
-			
-				// Continue with booking logic for the chosen valid location
-				// ...
-			}
+            
 			
 			
 			//Asks for the date for checking in
 			//MONTH
 				do {
 					   checkInMonthNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What month will you check in? (Enter a number 1-12)", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE));
-				} while (checkInMonthNumber < 1 || checkInMonthNumber > 12);
+				
 			
 					switch (checkInMonthNumber)
 					{
@@ -103,14 +102,15 @@ import java.util.Calendar;
 						case 12: dateInMonth = "December"; break;
 						default: 
 							JOptionPane.showMessageDialog(null, "Invalid input! Please enter a number between 1 and 12.");
-							checkInMonthNumber = 0;	
+							checkInMonthNumber = 0;
 					}
-
+					checkInConfirmation = JOptionPane.showConfirmDialog(null, "You have selected: " + dateInMonth);	
+					} while (checkInMonthNumber < 1 || checkInMonthNumber > 12 || checkInConfirmation == 1);
 			//DAY
 
 				while (checkInDayNumber < 1 || checkInDayNumber > 31) 
 				{
-					checkInDayNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What day you check in? (Enter a number 1-31)", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE));
+					checkInDayNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What day will you check in? (Enter a number 1-31)", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE));
 				}
 
 
@@ -119,6 +119,8 @@ import java.util.Calendar;
 				while (checkInYearNumber < currentYear || checkInYearNumber > 2035)
 				{
 					checkInYearNumber = Integer.parseInt(JOptionPane.showInputDialog(null, "What year will you check in? "));
+					if (checkInYearNumber < currentYear)
+					JOptionPane.showMessageDialog(null, "Invalid input! Outdated Date");
 				}
 			
 				//CHECK OUT
@@ -165,13 +167,21 @@ import java.util.Calendar;
 			//Asks for the staying Guests
 
 			guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying? "));
+
 			childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null,"Are there any children? "));
 
-		    if(childrenCount >= 1)
+		    if(childrenAge != childrenCount)
 		    {
 		    	System.out.println("What is the age(s) of your child/children?");
+				childrenAge++;
+				if (childrenAge >= 8);
+				adultChild++;
+
+				if (childrenAge <= 7);
+				minorChild++;
 		    }
 
+			JOptionPane.showMessageDialog(null, "Minors = " + minorChild + "Adult = " + adultChild);
 			pwdAssistance = JOptionPane.showConfirmDialog(null,"Does any guest need Special need assistance? (PWD) ");		//Asks for any pwd 
 			name = JOptionPane.showInputDialog(null, "What is your name? ");
 			JOptionPane.showMessageDialog(null, "Welcome to Hotel Transelvania. Please enjoy your Stay <3");
@@ -193,3 +203,4 @@ import java.util.Calendar;
 			+ "\n guest staying with " + childrenCount + " children. " + pwdAssistanceInfo + ".");
      	}
 	}
+}
