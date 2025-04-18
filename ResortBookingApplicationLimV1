@@ -13,7 +13,7 @@ import java.util.Calendar;
 
 			String location, name, pwdAssistanceInfo, dateInMonth, dateOutMonth, checkInDetails, checkOutDetails;
 			int pwdAssistance, checkInMonthNumber, checkInDayNumber, checkInYearNumber, checkOutMonthNumber, checkOutDayNumber, checkOutYearNumber, ctr, childrenCount, book, guestStaying, adultChild, minorChild, childrenAge, checkInConfirmation;
-
+			int noOfRooms;
 
             book = JOptionPane.YES_OPTION;
 			location = "";
@@ -34,6 +34,7 @@ import java.util.Calendar;
 			adultChild = 0; 
 			minorChild = 0;
 			checkInConfirmation = -2;
+			noOfRooms = 0;
 
 			//Calendar checkInDate;
 			
@@ -165,21 +166,22 @@ import java.util.Calendar;
 
 
 			//Asks for the staying Guests
+			noOfRooms = Integer.parseInt(JOptionPane.showInputDialog(null, "How many rooms to be availed?"));
+			guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying?"));
 
-			guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying? "));
+			childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null,"Are there any children?"));
 
-			childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null,"Are there any children? "));
-
-		    if(childrenAge != childrenCount)
+		    do
 		    {
-		    	System.out.println("What is the age(s) of your child/children?");
+		    	JOptionPane.showInputDialog("What is the age(s) of your child/children?\nBed Policy\n0 – 7 Stay for free if using existing bedding\n8 – 17 Considered adult. Must avail extra bed.");
 				childrenAge++;
 				if (childrenAge >= 8);
 				adultChild++;
 
 				if (childrenAge <= 7);
 				minorChild++;
-		    }
+		    } while (childrenAge != childrenCount);
+
 
 			JOptionPane.showMessageDialog(null, "Minors = " + minorChild + "Adult = " + adultChild);
 			pwdAssistance = JOptionPane.showConfirmDialog(null,"Does any guest need Special need assistance? (PWD) ");		//Asks for any pwd 
@@ -200,7 +202,7 @@ import java.util.Calendar;
 			//output
 			JOptionPane.showMessageDialog(null, "Hello, Welcome to Hotel Tanselvania " + name + 
 			"\n You would like to go to " + location + " on " + dateIn + " and leave on " + dateOut + " with " + guestStaying
-			+ "\n guest staying with " + childrenCount + " children. " + pwdAssistanceInfo + ".");
+			+ "\n guest staying with " + childrenCount + " children. " + " and " + noOfRooms + "no of rooms" + pwdAssistanceInfo + ".");
      	}
 	}
 }
