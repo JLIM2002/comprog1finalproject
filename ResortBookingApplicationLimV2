@@ -1,0 +1,271 @@
+import javax.swing.*;
+import java.time.LocalDate;
+import java.time.Year;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+import java.util.Scanner;
+
+	public class ResortBookingApplicationLimV2
+	{
+            // checker
+    public static boolean isValidDate(int month, int day, int year) {
+        if (year < 2025) {
+            JOptionPane.showMessageDialog(null, "Year is in the past.");
+            return false;
+        }
+
+        if (month < 1 || month > 12) {
+            JOptionPane.showMessageDialog(null, "Invalid month.");
+            return false;
+        }
+
+        if (day < 1 || day > 31) {
+            JOptionPane.showMessageDialog(null, "Invalid day.");
+            return false;
+        }
+
+        // month
+        if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30) {
+            JOptionPane.showMessageDialog(null, "This month only has 30 days.");
+            return false;
+        }
+
+        // feb
+        if (month == 2 && day > 28) {
+            JOptionPane.showMessageDialog(null, "February only has 28 days.");
+            return false;
+        }
+
+        return true;
+    }
+    // checkin
+    public static void bookingIn() {
+        int month, day, year;
+        boolean validDate = false;
+        String formattedDate = "";
+
+        do {
+            try {
+                month = Integer.parseInt(JOptionPane.showInputDialog("Enter booking month (1–12):"));
+                day = Integer.parseInt(JOptionPane.showInputDialog("Enter booking day:"));
+                year = Integer.parseInt(JOptionPane.showInputDialog("Enter booking year (e.g. 2025):"));
+
+                validDate = isValidDate(month, day, year);
+
+                if (validDate) {
+                    formattedDate = String.format("%02d/%02d/%04d", month, day, year);
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                        null,
+                        "You entered: " + formattedDate + "\nConfirm booking date?",
+                        "Confirm Date",
+                        JOptionPane.YES_NO_OPTION
+                    );
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        JOptionPane.showMessageDialog(null, "Booking date confirmed: " + formattedDate);
+                    } else {
+                        validDate = false; // loop again if not confirmed
+                    }
+                }
+
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Invalid input. Please enter numbers only.");
+                validDate = false;
+            }
+
+        } while (!validDate);
+    }
+
+    // Booking out (checkout) method
+    public static void bookingOut() {
+        int month, day, year;
+        boolean validDate = false;
+        String formattedDate = "";
+
+        do {
+            try {
+                month = Integer.parseInt(JOptionPane.showInputDialog("Enter departure month (1–12):"));
+                day = Integer.parseInt(JOptionPane.showInputDialog("Enter departure day:"));
+                year = Integer.parseInt(JOptionPane.showInputDialog("Enter departure year (e.g. 2025):"));
+
+                validDate = isValidDate(month, day, year);
+
+                if (validDate) {
+                    formattedDate = String.format("%02d/%02d/%04d", month, day, year);
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                        null,
+                        "You entered: " + formattedDate + "\nConfirm departure date?",
+                        "Confirm Departure",
+                        JOptionPane.YES_NO_OPTION
+                    );
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        JOptionPane.showMessageDialog(null, "Departure date confirmed: " + formattedDate);
+                        dateIn = formattedDate;
+                    } else {
+                        validDate = false; // loop again if not confirmed
+                    }
+                }
+
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Invalid input. Please enter numbers only.");
+                validDate = false;
+            }
+
+        } while (!validDate);
+    }
+   		public static void main(String [] args) 
+   		{
+
+			String location, name, pwdAssistanceInfo;
+			int pwdAssistance, checkInMonthNumber, checkInDayNumber, checkInYearNumber, checkOutMonthNumber, checkOutDayNumber, checkOutYearNumber, ctr, childrenCount, book, guestStaying, adultChild, minorChild, childrenAge, checkInConfirmation;
+			int noOfRooms, childrenCounter;
+
+            book = JOptionPane.YES_OPTION;
+			location = "";
+			dateInMonth = "";
+			dateOutMonth = "";
+			checkInMonthNumber = 0;
+			checkOutMonthNumber = 0;
+			checkInDayNumber = 0;
+			checkOutDayNumber = 0;
+			checkInYearNumber = 0;
+			checkOutYearNumber = 0;
+			ctr = 0;
+			checkInDetails = "";
+			checkOutDetails = "";
+            name = "";
+            guestStaying = 0;
+			childrenCount = 0;
+			childrenAge = 0;
+			adultChild = 0; 
+			minorChild = 0;
+			checkInConfirmation = -2;
+			noOfRooms = 0;
+			childrenCounter = 0;
+			int minorAge = 0;
+			int adultAge = 0;
+
+			//Calendar checkInDate;
+			
+///			LocalDate today = LocalDate.now();
+///			String dateIn = null, dateOut = null;
+///			int currentYear = Year.now().getValue();
+///			LocalDate bookingDate = LocalDate.of(year, monthNumber, dayNumber);
+
+
+			//input
+			//ASK FOR THE LOCATION OF CHECK IN
+			//CHECK IN
+            
+			book = JOptionPane.showConfirmDialog(null, "Would you like to book");
+
+
+			while (book == JOptionPane.YES_OPTION) {
+				boolean validLocation = false;
+						
+				while (!validLocation) {
+					location = JOptionPane.showInputDialog(null, "Where would you like to go?\nSupported Locations:\nLocal:        International:\nBaguio      Hongkong\nBoracay     Japan\nEl Nido     Singapore\nSiargao     South Korea", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE);
+			
+
+					//CANCEL BUTTON
+					if (location == null) {
+						break;
+					}
+			
+					switch (location.toLowerCase()) {
+						case "baguio":
+						case "boracay":
+						case "el nido":
+						case "siargao":
+						case "hong kong":
+						case "japan":
+						case "singapore":
+						case "south korea":
+							validLocation = true;
+							JOptionPane.showMessageDialog(null, "You have selected: " + location);
+							break;
+						default:
+							JOptionPane.showMessageDialog(null, "Invalid location. Please choose a valid destination.");
+                        }
+                    }
+
+                int monthIn, dayIn, yearIn, monthOut, dayOut, yearOut;
+
+                do
+                {
+                monthIn = Integer.parseInt(JOptionPane.showInputDialog("Enter check-in month (1-12):"));
+                dayIn = Integer.parseInt(JOptionPane.showInputDialog("Enter check-in day (1-31):"));
+                yearIn = Integer.parseInt(JOptionPane.showInputDialog("Enter check-in year (e.g., 2025):"));
+                
+                monthOut = Integer.parseInt(JOptionPane.showInputDialog("Enter check-out month (1-12):"));
+                dayOut = Integer.parseInt(JOptionPane.showInputDialog("Enter check-out day (1-31):"));
+                yearOut = Integer.parseInt(JOptionPane.showInputDialog("Enter check-out year (e.g., 2025):"));
+
+                            // Validate the dates (check if the dates are within a valid range)
+                    if (!isValidDate(monthIn, dayIn, yearIn) || !isValidDate(monthOut, dayOut, yearOut)) 
+                    {
+                    JOptionPane.showMessageDialog(null, "Invalid booking dates entered. Please try again.");
+                    continue; // Stop execution if the dates are invalid
+                    }
+                } while (!isValidDate(monthIn, dayIn, yearIn) || !isValidDate(monthOut, dayOut, yearOut));
+
+			//Asks for the staying Guests
+			noOfRooms = Integer.parseInt(JOptionPane.showInputDialog(null, "How many rooms to be availed?"));
+			guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying?"));
+
+
+			childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null,"Are there any children?"));
+			if (childrenCount == 0) {
+				JOptionPane.showMessageDialog(null, "No children entered.");
+			} else {
+				childrenCounter = 0;
+				
+
+		   do
+		    {
+				childrenCounter++;
+		    	childrenAge = Integer.parseInt(JOptionPane.showInputDialog("What is the age of child #" + childrenCounter + "?\nBed Policy\nAges 1 – 7 | Stay for free if using existing bedding\nAges 8 – 17 | Considered adult. Must avail extra bed."));
+
+            	if (childrenAge <= 0) {
+            	    JOptionPane.showMessageDialog(null, "Enter a valid age");
+            	} else if (childrenAge <= 12) {
+            	    minorAge++;
+            	} else if (childrenAge >= 13 && childrenAge < 18) {
+            	    adultAge++;
+            	} else if (childrenAge >= 18) {
+            	    JOptionPane.showMessageDialog(null, "Adult age entered");
+            	}
+         		} while (childrenCounter < childrenCount);
+
+				if(childrenCount != 0)
+				JOptionPane.showMessageDialog(null, "Minor " + minorAge + " " + "Major " + adultAge);
+			}
+			
+			pwdAssistance = JOptionPane.showConfirmDialog(null,"Does any guest need Special need assistance? (PWD) ");
+			name = JOptionPane.showInputDialog(null, "What is your name? ");
+			JOptionPane.showMessageDialog(null, "Welcome to Hotel Transelvania. Please enjoy your Stay <3");
+			pwdAssistanceInfo = "No response provided";
+            pwdAssistance = 0;
+			if (pwdAssistance == 0) 
+			{
+				pwdAssistanceInfo = "Assisting your room for pwd assistance";
+			}
+			
+			if (pwdAssistance == 1)
+			{
+				pwdAssistanceInfo = "Without any need of special assistance";
+			}
+			
+			//output
+			JOptionPane.showMessageDialog(null, "Hello, Welcome to Hotel Tanselvania " + name + 
+			"\n You would like to go to " + location + " on " + "IN" + " and leave on " + "OUT" + " with " + guestStaying
+			+ "\n guest staying with " + childrenCount + " children. " + " and " + noOfRooms + "no of rooms" + pwdAssistanceInfo + ".");
+			break;	
+        }
+    }
+}
