@@ -15,18 +15,18 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Scanner;
+import java.time.LocalDate;
 
 	public class ResortBookingApplicationLimV3
 	{
         static String checkInDate = "";
-        static int monthIn, dayIn;
+        static int monthIn, dayIn, yearIn;
         static String checkOutDate = "";
-        static int monthOut, dayOut;
+        static int monthOut, dayOut, yearOut;
         static int roomsAvailable;
         static int standard, deluxe, quadruple, family, suite;
 
 
-            // checker
     public static boolean isValidDate(int month, int day, int year) 
     {
         if (year < 2025) 
@@ -47,17 +47,35 @@ import java.util.Scanner;
             return false;
         }
 
-        // month
+        // Check for months with 30 days
         if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30) 
         {
             JOptionPane.showMessageDialog(null, "This month only has 30 days.");
             return false;
         }
 
-        // feb
+        // Check for February (no leap year logic for now)
         if (month == 2 && day > 28) 
         {
             JOptionPane.showMessageDialog(null, "February only has 28 days.");
+            return false;
+        }
+
+    // Validation
+        try 
+        {
+            LocalDate inputDate = LocalDate.of(year, month, day);
+            LocalDate today = LocalDate.now();
+
+            if (!inputDate.isAfter(today)) 
+            {
+                JOptionPane.showMessageDialog(null, "Booking must be for a future date.");
+                return false;
+            }
+        } 
+        catch (Exception e) 
+        {
+            JOptionPane.showMessageDialog(null, "Invalid date entered.");
             return false;
         }
 
@@ -87,25 +105,29 @@ import java.util.Scanner;
         }
 
     // checkin
-    public static void bookingIn() {
-        int year;
+    public static void bookingIn() 
+    {
+        int yearIn;
         boolean validDate = false;
     
-        do {
-            try {
+        do 
+        {
+            try 
+            {
                 monthIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking month (1–12):"));
                 dayIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking day:"));
-                year = Integer.parseInt(JOptionPane.showInputDialog("Enter booking year (e.g. 2025):"));
+                yearIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking year (e.g. 2025):"));
     
-                validDate = isValidDate(monthIn, dayIn, year);
+                validDate = isValidDate(monthIn, dayIn, yearIn);
     
                 if (validDate) {
-                    checkInDate = String.format("%02d/%02d/%04d", monthIn, dayIn, year);
+                    checkInDate = String.format("%02d/%02d/%04d", monthIn, dayIn, yearIn);
     
                     int confirm = JOptionPane.showConfirmDialog(null, "You entered: " + checkInDate + 
                     "\nConfirm booking date?", "Confirm Date", JOptionPane.YES_NO_OPTION);
     
-                    if (confirm == JOptionPane.YES_OPTION) {
+                    if (confirm == JOptionPane.YES_OPTION) 
+                    {
                         JOptionPane.showMessageDialog(null, "Booking date confirmed: " + checkInDate);
                     } else {
                         validDate = false;
@@ -119,26 +141,21 @@ import java.util.Scanner;
 
     //checkout
     public static void bookingOut() {
-        int year;
+        int yearOut;
         boolean validDate = false;
     
         do {
             try {
                 monthOut = Integer.parseInt(JOptionPane.showInputDialog("Enter departure month (1–12):"));
                 dayOut = Integer.parseInt(JOptionPane.showInputDialog("Enter departure day:"));
-                year = Integer.parseInt(JOptionPane.showInputDialog("Enter departure year (e.g. 2025):"));
+                yearOut = Integer.parseInt(JOptionPane.showInputDialog("Enter departure year (e.g. 2025):"));
     
-                validDate = isValidDate(monthOut, dayOut, year);
+                validDate = isValidDate(monthOut, dayOut, yearOut);
     
                 if (validDate) {
-                    checkOutDate = String.format("%02d/%02d/%04d", monthOut, dayOut, year);
+                    checkOutDate = String.format("%02d/%02d/%04d", monthOut, dayOut, yearOut);
     
-                    int confirm = JOptionPane.showConfirmDialog(
-                        null,
-                        "You entered: " + checkOutDate + "\nConfirm departure date?",
-                        "Confirm Departure",
-                        JOptionPane.YES_NO_OPTION
-                    );
+                    int confirm = JOptionPane.showConfirmDialog(null, "You entered: " + checkOutDate + "\nConfirm departure date?","Confirm Departure",JOptionPane.YES_NO_OPTION);
     
                     if (confirm == JOptionPane.YES_OPTION) {
                         JOptionPane.showMessageDialog(null, "Departure date confirmed: " + checkOutDate);
@@ -154,6 +171,7 @@ import java.util.Scanner;
     
         } while (!validDate);
     }    
+
 
     public static void loadRooms() {
         try {
@@ -187,15 +205,64 @@ import java.util.Scanner;
             JOptionPane.showMessageDialog(null, "Error saving room data.");
         }
     }
+
+    public static void ammenities()
+    {
+        int addBed = 0;
+        int addBlanket = 0;
+        int addPillow = 0;
+        int addToiletries = 0;
+
+        boolean continueAdding = true;
+
+        while (continueAdding) 
+        {
+            
+        int choice = Integer.parseInt(JOptionPane.showInputDialog(null,
+                "Add-ons:\n" +
+                "1. Blanket (Php 250.00)\n" +
+                "2. Pillow (Php 100.00)\n" +
+                "3. Toiletries (Php 200.00/set)\n" +
+                "4. Continue"));
+
+        switch (choice) 
+        {
+                case 1:
+                    addBlanket += Integer.parseInt(JOptionPane.showInputDialog(null, "How many Blankets will be added?"));
+                    break;
+                case 2:
+                    addPillow += Integer.parseInt(JOptionPane.showInputDialog(null, "How many Pillows will be added?"));
+                    break;
+                case 3:
+                    addToiletries += Integer.parseInt(JOptionPane.showInputDialog(null, "How many Toiletries will be added?"));
+                    break;
+                case 4:
+                    continueAdding = false;
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(null, "Invalid choice. Please select from 1 to 5.");
+        }
     
+
+                // Show summary of selected amenities
+        JOptionPane.showMessageDialog(null,
+            "Amenity Summary:\n" +
+            "Beds: " + addBed + "\n" +
+            "Blankets: " + addBlanket + "\n" +
+            "Pillows: " + addPillow + "\n" +
+            "Toiletries: " + addToiletries);
+        }
+    }
+
    		public static void main(String [] args) 
    		{
 
 			String location, name, pwdAssistanceInfo;
             String seasonIn = getBookingSeason(monthIn, dayIn);
             String seasonOut = getBookingSeason(monthOut, dayOut);
-			int pwdAssistance, childrenCount, book, guestStaying, childrenAge;
-			int noOfRooms, childrenCounter;
+			int pwdAssistance, childrenCount, book, guestStaying, childrenAge, ammenitiesconfirmation;
+			int childrenCounter;
+
 
             book = JOptionPane.YES_OPTION;
 			location = "";
@@ -203,7 +270,6 @@ import java.util.Scanner;
             guestStaying = 0;
 			childrenCount = 0;
 			childrenAge = 0;
-			noOfRooms = 0;
 			childrenCounter = 0;
 			int minorAge = 0;
 			int adultAge = 0;
@@ -213,22 +279,26 @@ import java.util.Scanner;
 			//ASK FOR THE LOCATION OF CHECK IN
 			//CHECK IN
             
-			book = JOptionPane.showConfirmDialog(null, "Would you like to book");
+			book = JOptionPane.showConfirmDialog(null, "Would you like to book", "Booking Hotel",JOptionPane.YES_NO_OPTION);
 
 
-			while (book == JOptionPane.YES_OPTION) {
+			while (book == JOptionPane.YES_OPTION) 
+            {
 				boolean validLocation = false;
 						
-				while (!validLocation) {
+				while (!validLocation) 
+                {
 					location = JOptionPane.showInputDialog(null, "Where would you like to go?\nSupported Locations:\nLocal:        International:\nBaguio      Hongkong\nBoracay     Japan\nEl Nido     Singapore\nSiargao     South Korea", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE);
 			
 
 					//CANCEL BUTTON
-					if (location == null) {
+					if (location == null) 
+                    {
 						break;
 					}
 			
-					switch (location.toLowerCase()) {
+					switch (location.toLowerCase()) 
+                    {
 						case "baguio":
 						case "boracay":
 						case "el nido":
@@ -245,16 +315,30 @@ import java.util.Scanner;
                         }
                     }
                     
+            do {
+                bookingIn();
+                bookingOut();
+                if (monthIn == monthOut && dayIn == dayOut && yearIn == yearOut)
+                {
+                    JOptionPane.showMessageDialog(null, "Overlapping dates. Try again.");
+                }
 
-            bookingIn();
-            bookingOut();
+
+            } while (monthIn == monthOut && dayIn == dayOut && yearIn == yearOut);
+
+            
+            JOptionPane.showMessageDialog(null, "Booked: " + checkInDate + " - " + checkOutDate + " Blank Days.");
+            
 
 			//Asks for the staying Guests
+//            do {
+                
+                guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying?"));
+            
+//            }while (guestStaying != 0);
 
-			guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying?"));
-
-
-			childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null,"Are there any children?"));
+            
+			childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null,"How many children?"));
 			if (childrenCount == 0) {
 				JOptionPane.showMessageDialog(null, "No children entered.");
 			} else {
@@ -268,14 +352,14 @@ import java.util.Scanner;
 
             	if (childrenAge <= 0) {
             	    JOptionPane.showMessageDialog(null, "Enter a valid age");
-            	} else if (childrenAge <= 12) {
+            	} else if (childrenAge <= 8) {
             	    minorAge++;
-            	} else if (childrenAge >= 13 && childrenAge < 18) {
+            	} else if (childrenAge >= 9 && childrenAge <= 17) {
             	    adultAge++;
             	} else if (childrenAge >= 18) {
             	    JOptionPane.showMessageDialog(null, "Adult age entered");
             	}
-         		} while (childrenCounter < childrenCount);
+         	} while (childrenCounter < childrenCount);
 
 				if(childrenCount != 0)
 				JOptionPane.showMessageDialog(null, "Minor " + minorAge + " Adult " + adultAge);
@@ -351,10 +435,17 @@ import java.util.Scanner;
 
             saveRooms();
 
+            ammenitiesconfirmation = JOptionPane.showConfirmDialog(null, "Avail Ammenities?", "Ammenities", JOptionPane.YES_NO_OPTION);
+
+
+            if (ammenitiesconfirmation == JOptionPane.YES_OPTION) 
+            {
+                ammenities();
+            }
 
             
-			pwdAssistance = JOptionPane.showConfirmDialog(null,"Does any guest need Special need assistance? (PWD) ");
-			name = JOptionPane.showInputDialog(null, "What is your name? ");
+			pwdAssistance = JOptionPane.showConfirmDialog(null,"Does any guest need Special need assistance? (PWD) ", "Set PWD friendly room", JOptionPane.YES_NO_OPTION);
+			name = JOptionPane.showInputDialog(null, "What will be the name for the booking? ");
 			JOptionPane.showMessageDialog(null, "Welcome to Hotel Transelvania. Please enjoy your Stay <3");
 			pwdAssistanceInfo = "No response provided";
             pwdAssistance = 0;
@@ -367,11 +458,20 @@ import java.util.Scanner;
 			{
 				pwdAssistanceInfo = "Without any need of special assistance";
 			}
+           
+            
+            //Computation
+
+            //date
+            //guest
+            //bed
+            //ammenities
+
 			
 			//output
 			JOptionPane.showMessageDialog(null, "Hello, Welcome to Hotel Tanselvania " + name + 
 			"\n You would like to go to " + location + " on " + checkInDate + " " + seasonIn + " and leave on " + checkOutDate + " " + seasonOut + " with " + guestStaying
-			+ " \n guest staying with " + childrenCount + " children." + " and " + quantity + " no of rooms " + pwdAssistanceInfo + ".");
+			+ " \n guest staying with " + childrenCount + " children" + " and " + quantity + " no of rooms " + pwdAssistanceInfo + ".");
 			break;	
         }
     }
