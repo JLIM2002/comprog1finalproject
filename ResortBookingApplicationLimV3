@@ -25,61 +25,39 @@ import java.time.LocalDate;
         static int monthOut, dayOut, yearOut;
         static int roomsAvailable;
         static int standard, deluxe, quadruple, family, suite;
+        static java.time.LocalDate checkInLocalDate, checkOutLocalDate;
 
 
-    public static boolean isValidDate(int month, int day, int year) 
+public static boolean isValidDate(int month, int day, int year) 
     {
+        // Check for a reasonable future year
         if (year < 2025) 
         {
-            JOptionPane.showMessageDialog(null, "Year is in the past.");
+            JOptionPane.showMessageDialog(null, "Year must be 2025 or later.");
             return false;
         }
 
-        if (month < 1 || month > 12) 
-        {
-            JOptionPane.showMessageDialog(null, "Invalid month.");
-            return false;
-        }
-
-        if (day < 1 || day > 31) 
-        {
-            JOptionPane.showMessageDialog(null, "Invalid day.");
-            return false;
-        }
-
-        // Check for months with 30 days
-        if ((month == 4 || month == 6 || month == 9 || month == 11) && day > 30) 
-        {
-            JOptionPane.showMessageDialog(null, "This month only has 30 days.");
-            return false;
-        }
-
-        // Check for February (no leap year logic for now)
-        if (month == 2 && day > 28) 
-        {
-            JOptionPane.showMessageDialog(null, "February only has 28 days.");
-            return false;
-        }
-
-    // Validation
         try 
         {
+            // This handles invalid dates like Feb 30, April 31, leap years, etc.
             LocalDate inputDate = LocalDate.of(year, month, day);
             LocalDate today = LocalDate.now();
 
+            // Booking must be in the future
             if (!inputDate.isAfter(today)) 
             {
                 JOptionPane.showMessageDialog(null, "Booking must be for a future date.");
                 return false;
             }
+
+            return true;
         } 
         catch (Exception e) 
         {
-            JOptionPane.showMessageDialog(null, "Invalid date entered.");
+            // This catches all date-related issues, such as bad day/month combos
+            JOptionPane.showMessageDialog(null, "Invalid date entered. Please check the day and month.");
             return false;
         }
-
-        return true;
     }
 
     public static String getBookingSeason(int month, int day)
@@ -118,6 +96,7 @@ import java.time.LocalDate;
                 dayIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking day:"));
                 yearIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking year (e.g. 2025):"));
     
+                
                 validDate = isValidDate(monthIn, dayIn, yearIn);
     
                 if (validDate) {
@@ -129,6 +108,7 @@ import java.time.LocalDate;
                     if (confirm == JOptionPane.YES_OPTION) 
                     {
                         JOptionPane.showMessageDialog(null, "Booking date confirmed: " + checkInDate);
+                        checkInLocalDate = LocalDate.of(yearIn, monthIn, dayIn);
                     } else {
                         validDate = false;
                     }
@@ -159,6 +139,7 @@ import java.time.LocalDate;
     
                     if (confirm == JOptionPane.YES_OPTION) {
                         JOptionPane.showMessageDialog(null, "Departure date confirmed: " + checkOutDate);
+                        checkOutLocalDate = LocalDate.of(yearOut, monthOut, dayOut);
                     } else {
                         validDate = false; // loop again if not confirmed
                     }
@@ -254,6 +235,51 @@ import java.time.LocalDate;
         }
     }
 
+    public static void calculateBookingDuration() 
+    {
+        if (checkInLocalDate != null && checkOutLocalDate != null) 
+        {
+            long daysBetween = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+        
+            if (daysBetween > 0) 
+            {
+                    JOptionPane.showMessageDialog(null, "Booked: " + checkInDate + " - " + checkOutDate + "\n" + daysBetween + " days.");
+            }
+            else 
+            {
+                JOptionPane.showMessageDialog(null, 
+                    "Error: Departure date must be after check-in date.");
+            }
+        }    
+        else 
+        {
+            JOptionPane.showMessageDialog(null, 
+                "Error: Please ensure both check-in and check-out dates are set.");
+        
+        }    
+    }
+
+    public static boolean isBookingWithinOneYear() 
+    {
+        if (checkInLocalDate == null || checkOutLocalDate == null) return false;
+
+        long daysBetween = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+
+        if (daysBetween <= 0) {
+            JOptionPane.showMessageDialog(null, "Check-out must be after check-in.");
+            return false;
+        }
+
+    if (daysBetween > 365) {
+        JOptionPane.showMessageDialog(null, "Booking cannot be longer than 1 year.");
+        return false;
+    }
+
+    return true;
+    }
+
+
+
    		public static void main(String [] args) 
    		{
 
@@ -273,6 +299,7 @@ import java.time.LocalDate;
 			childrenCounter = 0;
 			int minorAge = 0;
 			int adultAge = 0;
+            boolean validBooking = false;
 
 
 			//input
@@ -318,16 +345,20 @@ import java.time.LocalDate;
             do {
                 bookingIn();
                 bookingOut();
+                
+                if (isBookingWithinOneYear()) 
+                {
+                    calculateBookingDuration(); // success
+                    validBooking = true;       // exit the loop
+                }
+
                 if (monthIn == monthOut && dayIn == dayOut && yearIn == yearOut)
                 {
                     JOptionPane.showMessageDialog(null, "Overlapping dates. Try again.");
                 }
 
 
-            } while (monthIn == monthOut && dayIn == dayOut && yearIn == yearOut);
-
-            
-            JOptionPane.showMessageDialog(null, "Booked: " + checkInDate + " - " + checkOutDate + " Blank Days.");
+            } while (monthIn == monthOut && dayIn == dayOut && yearIn == yearOut || !validBooking);
             
 
 			//Asks for the staying Guests
