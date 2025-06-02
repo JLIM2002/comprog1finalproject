@@ -1,0 +1,1027 @@
+ /*
+ * Resort booking application
+ * Version: 3
+ * Authors: Jeremy Lim, Czybelle Ombao, April Cagungun, Mylene Cortez 
+ */
+
+
+
+import java.io.*;
+import javax.swing.*;
+import java.time.LocalDate;
+import java.time.MonthDay;
+import java.time.Period;
+import java.time.Year;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.time.LocalDate;
+
+
+	public class ResortBookingApplicationFinalComprog
+	{
+        static String checkInDate = "";
+        static int monthIn, dayIn, yearIn;
+        static String checkOutDate = "";
+        static int monthOut, dayOut, yearOut;
+        static int roomsAvailable;
+        static int standard, deluxe, quadruple, family, suite;
+        static final int MAX_EXTRA_BEDS_PER_ROOM = 1;
+        static final int EXTRA_BED_COST = 650;
+        static LocalDate checkInLocalDate;
+        static LocalDate checkOutLocalDate;
+        static int totalAddons = 0;
+        static int totalAmenities = 0;
+        static int extraBedsUsed = 0;
+        static RoomBookingResult bookingResult2;
+
+        public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        static Map<String, Integer> extraBedsPerRoom = new HashMap<>();
+        static Map<String, Integer> nightCounts = new HashMap<>();
+
+        // The fixed rates per season
+        static Map<String, Integer> seasonRates = Map.of(
+        "Lean", 3000,
+        "High", 4000,
+        "Peak", 5000,
+        "Super Peak", 6000
+        );
+
+
+public static boolean isValidDate(int month, int day, int year) {
+    // Check for a reasonable future year
+    if (year < 2025) {
+        JOptionPane.showMessageDialog(null, "Year must be 2025 or later.");
+        return false;
+    }
+
+    try {
+        // This handles invalid dates like Feb 30, April 31, leap years, etc.
+        LocalDate inputDate = LocalDate.of(year, month, day);
+        LocalDate today = LocalDate.now();
+
+        // Booking must be in the future
+        if (!inputDate.isAfter(today)) {
+            JOptionPane.showMessageDialog(null, "Booking must be for a future date.");
+            return false;
+        }
+
+        return true;
+    } catch (Exception e) {
+        // This catches all date-related issues, such as bad day/month combos
+        JOptionPane.showMessageDialog(null, "Invalid date entered. Please check the day and month.");
+        return false;
+    }
+}
+
+
+    // checkin
+    public static void bookingIn() {
+        int yearIn;
+        boolean validDate = false;
+
+        do {
+            try {
+                int monthIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking month (1–12):"));
+                int dayIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking day:"));
+                yearIn = Integer.parseInt(JOptionPane.showInputDialog("Enter booking year (e.g. 2025):"));
+
+                validDate = isValidDate(monthIn, dayIn, yearIn);
+
+                if (validDate) {
+                    checkInLocalDate = LocalDate.of(yearIn, monthIn, dayIn);
+                    String checkInDate = checkInLocalDate.format(formatter);
+
+                    
+                    int confirm = JOptionPane.showConfirmDialog(null, "You entered: " + checkInDate + 
+                        "\nConfirm booking date?", "Confirm Date", JOptionPane.YES_NO_OPTION);
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        String season = getSeason(checkInLocalDate);
+                        JOptionPane.showMessageDialog(null, "Booking date confirmed: " + checkInDate + "\nSeason: " + season);
+                    } else {
+                        validDate = false;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Invalid input. Please enter numbers only.");
+            }
+        } while (!validDate);
+    }
+
+
+    //checkout
+public static void bookingOut() {
+        int yearOut;
+        boolean validDate = false;
+
+        do {
+            try {
+                int monthOut = Integer.parseInt(JOptionPane.showInputDialog("Enter checkout month (1–12):"));
+                int dayOut = Integer.parseInt(JOptionPane.showInputDialog("Enter checkout day:"));
+                yearOut = Integer.parseInt(JOptionPane.showInputDialog("Enter checkout year (e.g. 2025):"));
+
+                validDate = isValidDate(monthOut, dayOut, yearOut);
+
+                if (validDate) {
+                    checkOutLocalDate = LocalDate.of(yearOut, monthOut, dayOut);
+                    String checkOutDate = checkOutLocalDate.format(formatter);
+
+                    int confirm = JOptionPane.showConfirmDialog(null, "You entered: " + checkOutDate + 
+                        "\nConfirm checkout date?", "Confirm Date", JOptionPane.YES_NO_OPTION);
+
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        String season = getSeason(checkOutLocalDate);
+                        JOptionPane.showMessageDialog(null, "Checkout date confirmed: " + checkOutDate + "\nSeason: " + season);
+                    } else {
+                        validDate = false;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Invalid input. Please enter numbers only.");
+            }
+        } while (!validDate);
+    }
+   
+
+public static RoomBookingResult selectRoomBasedOnGuests(int guestStaying, boolean isLocal, LocalDate checkInDate, int standard, int deluxe, int quadruple, int family, int suite) {
+    String[] roomNames = {"Standard", "Deluxe", "Quadruple", "Family", "Suite"};
+    int[] roomCapacities = {1, 2, 4, 6, 4};
+    boolean[] allowExtraBed = {true, true, true, true, false};
+    int[] roomAvailable = {standard, deluxe, quadruple, family, suite};
+
+    final int EXTRA_BED_COST = 650;
+    final int MAX_EXTRA_BEDS_PER_ROOM = 1;
+
+    ArrayList<String> availableOptions = new ArrayList<>();
+
+    for (int i = 0; i < roomNames.length; i++) {
+        int capacity = roomCapacities[i];
+        boolean canAddBed = allowExtraBed[i];
+
+        int maxGuestsPerRoom = canAddBed ? capacity + MAX_EXTRA_BEDS_PER_ROOM : capacity;
+        int minRoomsNeeded = (int) Math.ceil((double) guestStaying / maxGuestsPerRoom);
+
+        if (roomAvailable[i] >= minRoomsNeeded) {
+            availableOptions.add((i + 1) + ". " + roomNames[i] + " (" + roomAvailable[i] + " available)");
+        }
+    }
+
+    if (availableOptions.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "No available rooms can accommodate " + guestStaying + " guests.");
+        return null;
+    }
+
+    StringBuilder menu = new StringBuilder("Select a room type:\n");
+    for (String option : availableOptions) {
+        menu.append(option).append("\n");
+    }
+
+    int roomChoice = Integer.parseInt(JOptionPane.showInputDialog(menu.toString()));
+    int roomIndex = roomChoice - 1;
+    int capacity = roomCapacities[roomIndex];
+    boolean canAddBed = allowExtraBed[roomIndex];
+
+    int quantity = Integer.parseInt(JOptionPane.showInputDialog("How many rooms to book?"));
+    if (quantity > roomAvailable[roomIndex]) {
+        JOptionPane.showMessageDialog(null, "Not enough " + roomNames[roomIndex] + " rooms available.");
+        return null;
+    }
+
+    int baseCapacity = capacity * quantity;
+    int maxGuestsWithBeds = baseCapacity + (canAddBed ? MAX_EXTRA_BEDS_PER_ROOM * quantity : 0);
+    int extraBeds = 0;
+
+    if (guestStaying > maxGuestsWithBeds) {
+        JOptionPane.showMessageDialog(null, "Too many guests. Selected rooms can accommodate up to " + maxGuestsWithBeds + " guests (with max 1 extra bed per room).");
+        return null;
+    } else if (guestStaying > baseCapacity) {
+        extraBeds = guestStaying - baseCapacity;
+        if (extraBeds > quantity * MAX_EXTRA_BEDS_PER_ROOM) {
+            JOptionPane.showMessageDialog(null, "Exceeded the maximum allowed extra beds (" + MAX_EXTRA_BEDS_PER_ROOM + " per room).");
+            return null;
+        }
+        JOptionPane.showMessageDialog(null, "Mandatory extra beds: " + extraBeds + " (₱" + EXTRA_BED_COST + " each per night).");
+    }
+
+    int roomRate = getRoomRate(roomNames[roomIndex], isLocal, checkInDate);
+    int totalCost = (roomRate * quantity) + (extraBeds * EXTRA_BED_COST);
+
+    return new RoomBookingResult(roomChoice, quantity, extraBeds, totalCost);
+}
+
+
+public static int addons(int guestStaying) 
+{
+    int addBlanket = 0;
+    int addPillow = 0;
+    int addToiletries = 0;
+
+    final int PRICE_BLANKET = 250;
+    final int PRICE_PILLOW = 100;
+    final int PRICE_TOILETRIES = 200;
+
+    boolean continueAdding = true;
+
+    while (continueAdding) {
+        String input = JOptionPane.showInputDialog(null,
+                "Add-ons:\n" +
+                "1. Blanket (Php " + PRICE_BLANKET + ") — currently: " + addBlanket + "/" + guestStaying + "\n" +
+                "2. Pillow (Php " + PRICE_PILLOW + ") — currently: " + addPillow + "/" + guestStaying + "\n" +
+                "3. Toiletries (Php " + PRICE_TOILETRIES + "/set) — currently: " + addToiletries + "/" + guestStaying + "\n" +
+                "4. Finish Adding");
+
+        if (input == null) {
+            continueAdding = false;
+            break;
+        }
+
+        int choice;
+        try {
+            choice = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Invalid input. Please enter a number from 1 to 4.");
+            continue;
+        }
+
+        int remaining;
+        int quantity;
+        String itemName = "";
+
+        switch (choice) {
+            case 1:
+                itemName = "Blankets";
+                remaining = guestStaying - addBlanket;
+                break;
+            case 2:
+                itemName = "Pillows";
+                remaining = guestStaying - addPillow;
+                break;
+            case 3:
+                itemName = "Toiletries";
+                remaining = guestStaying - addToiletries;
+                break;
+            case 4:
+                continueAdding = false;
+                continue;
+            default:
+                JOptionPane.showMessageDialog(null, "Invalid choice. Please select 1 to 4.");
+                continue;
+        }
+
+        if (remaining <= 0) {
+            JOptionPane.showMessageDialog(null, "You’ve already reached the limit for " + itemName + ".");
+            continue;
+        }
+
+        String qtyInput = JOptionPane.showInputDialog(null, "How many " + itemName + "? (Max: " + remaining + ")");
+        try {
+            quantity = Integer.parseInt(qtyInput);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Invalid number entered.");
+            continue;
+        }
+
+        if (quantity <= 0 || quantity > remaining) {
+            JOptionPane.showMessageDialog(null, "Invalid quantity. Please stay within the allowed limit.");
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                addBlanket += quantity;
+                break;
+            case 2:
+                addPillow += quantity;
+                break;
+            case 3:
+                addToiletries += quantity;
+                break;
+        }
+    }
+
+    int totalAddons = (addBlanket * PRICE_BLANKET) + (addPillow * PRICE_PILLOW) + (addToiletries * PRICE_TOILETRIES);
+
+    JOptionPane.showMessageDialog(null,
+            "Add-ons Summary:\n" +
+            "Blankets: " + addBlanket + " (Php " + (addBlanket * PRICE_BLANKET) + ")\n" +
+            "Pillows: " + addPillow + " (Php " + (addPillow * PRICE_PILLOW) + ")\n" +
+            "Toiletries: " + addToiletries + " (Php " + (addToiletries * PRICE_TOILETRIES) + ")\n" +
+            "Total Add-on Cost: Php " + totalAddons);
+
+    return totalAddons;
+}
+
+
+public static int amenities(int guestStaying, long daysBetween) {
+    int swimCount = 0;
+    int gymCount = 0;
+    int footSpaCount = 0;
+    int facialCount = 0;
+    int thaiMassageCount = 0;
+
+    final int PRICE_SWIM = 300;               // per day per person
+    final int PRICE_GYM = 500;                // per day per person
+    final int PRICE_FOOTSPA = 825;            // per session
+    final int PRICE_FACIAL = 1045;            // per session
+    final int PRICE_THAI = 1540;              // per session
+
+    boolean continueAdding = true;
+
+    while (continueAdding) {
+        int choice = Integer.parseInt(JOptionPane.showInputDialog(null,
+                "Select Amenities:\n" +
+                "1. Swimming Pool (Php " + PRICE_SWIM + "/day per person)\n" +
+                "2. Gym (Php " + PRICE_GYM + "/day per person)\n" +
+                "3. Foot Spa (Php " + PRICE_FOOTSPA + " per 45 mins)\n" +
+                "4. Aroma Facial Massage (Php " + PRICE_FACIAL + " per 45 mins)\n" +
+                "5. Thai Massage (Php " + PRICE_THAI + " per 75 mins)\n" +
+                "6. Continue to summary\n"));
+
+        int quantity;
+
+        switch (choice) {
+            case 1:
+                quantity = Integer.parseInt(JOptionPane.showInputDialog(null,
+                        "How many guests will use the Swimming Pool? (Max: " + guestStaying + ")"));
+                if (quantity <= guestStaying && quantity >= 0) {
+                    swimCount = quantity;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid number of guests.");
+                }
+                break;
+
+            case 2:
+                quantity = Integer.parseInt(JOptionPane.showInputDialog(null,
+                        "How many guests will use the Gym? (Max: " + guestStaying + ")"));
+                if (quantity <= guestStaying && quantity >= 0) {
+                    gymCount = quantity;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid number of guests.");
+                }
+                break;
+
+            case 3:
+                quantity = Integer.parseInt(JOptionPane.showInputDialog(null,
+                        "How many Foot Spa sessions?"));
+                if (quantity >= 0) {
+                    footSpaCount = quantity;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid number of sessions.");
+                }
+                break;
+
+            case 4:
+                quantity = Integer.parseInt(JOptionPane.showInputDialog(null,
+                        "How many Aroma Facial Massage sessions?"));
+                if (quantity >= 0) {
+                    facialCount = quantity;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid number of sessions.");
+                }
+                break;
+
+            case 5:
+                quantity = Integer.parseInt(JOptionPane.showInputDialog(null,
+                        "How many Thai Massage sessions?"));
+                if (quantity >= 0) {
+                    thaiMassageCount = quantity;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid number of sessions.");
+                }
+                break;
+
+            case 6:
+                continueAdding = false;
+                break;
+
+            default:
+                JOptionPane.showMessageDialog(null, "Invalid choice. Please select between 1 and 6.");
+        }
+    }
+
+    // Compute cost
+    int total = (int)((swimCount * PRICE_SWIM + gymCount * PRICE_GYM) * daysBetween) +
+                (footSpaCount * PRICE_FOOTSPA) +
+                (facialCount * PRICE_FACIAL) +
+                (thaiMassageCount * PRICE_THAI);
+
+    // Summary
+    JOptionPane.showMessageDialog(null,
+            "Amenities Summary:\n" +
+            "Swimming Pool: " + swimCount + " guest(s) x " + daysBetween + " day(s) = Php " + (swimCount * PRICE_SWIM * daysBetween) + "\n" +
+            "Gym: " + gymCount + " guest(s) x " + daysBetween + " day(s) = Php " + (gymCount * PRICE_GYM * daysBetween) + "\n" +
+            "Foot Spa: " + footSpaCount + " session(s) = Php " + (footSpaCount * PRICE_FOOTSPA) + "\n" +
+            "Aroma Facial: " + facialCount + " session(s) = Php " + (facialCount * PRICE_FACIAL) + "\n" +
+            "Thai Massage: " + thaiMassageCount + " session(s) = Php " + (thaiMassageCount * PRICE_THAI) + "\n\n" +
+            "Total Amenity Cost: Php " + total);
+
+    return total;
+}
+
+
+public static void calculateBookingDuration() {
+        if (checkInLocalDate != null && checkOutLocalDate != null) {
+            long daysBetween = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+
+            if (daysBetween > 0) {
+                long nights = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+
+                Map<String, Integer> seasonCounts = new HashMap<>();
+                LocalDate currentDate = checkInLocalDate;
+
+                for (int i = 0; i < nights; i++) {
+                    String season = getSeason(currentDate);
+                    seasonCounts.put(season, seasonCounts.getOrDefault(season, 0) + 1);
+                    currentDate = currentDate.plusDays(1);
+                }
+
+                StringBuilder seasonBreakdown = new StringBuilder();
+                for (Map.Entry<String, Integer> entry : seasonCounts.entrySet()) {
+                    seasonBreakdown.append(entry.getValue())
+                                   .append(" night")
+                                   .append(entry.getValue() > 1 ? "s" : "")
+                                   .append(" ")
+                                   .append(entry.getKey())
+                                   .append("\n");
+                }
+
+                JOptionPane.showMessageDialog(null,
+                    "Booked: " + checkInLocalDate.format(formatter) + " - " + checkOutLocalDate.format(formatter) +
+                    "\n" + (daysBetween + 1) + " days, " + nights + " nights" +
+                    "\n\nBreakdown:\n" + seasonBreakdown.toString());
+            } else {
+                JOptionPane.showMessageDialog(null,
+                    "Error: Departure date must be after check-in date.");
+            }
+        } else {
+            JOptionPane.showMessageDialog(null,
+                "Error: Please ensure both check-in and check-out dates are set.");
+        }
+    }
+
+
+    public static boolean isBookingWithinOneYear() 
+    {
+        if (checkInLocalDate == null || checkOutLocalDate == null) return false;
+
+        long daysBetween = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+
+        if (daysBetween <= 0) {
+            JOptionPane.showMessageDialog(null, "Check-out must be after check-in.");
+            return false;
+        }
+
+    if (daysBetween > 365) {
+        JOptionPane.showMessageDialog(null, "Booking cannot be longer than 1 year.");
+        return false;
+    }
+
+    return true;
+    }
+
+    public static void processChildren(int guestStaying) {
+        int minorAge = 0;
+        int adultAge = 0;
+        int childrenCounter = 0;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        try {
+            int childrenCount = Integer.parseInt(JOptionPane.showInputDialog(null, "How many children?"));
+
+            if (childrenCount == 0) {
+                JOptionPane.showMessageDialog(null, "No children entered.");
+                return;
+            }
+
+            do {
+                childrenCounter++;
+                boolean validDate = false;
+                int age = 0;
+
+                while (!validDate) {
+                    try {
+                        String input = JOptionPane.showInputDialog(
+                                "Enter birthdate of child #" + childrenCounter + " (MM/dd/yyyy):\n" +
+                                        "Bed Policy:\nAges 1–7: Stay free using existing bedding\n" +
+                                        "Ages 8–17: Considered adult. Must avail extra bed.");
+
+                        if (input == null) return; // Cancel pressed
+
+                        LocalDate birthDate = LocalDate.parse(input, formatter);
+                        LocalDate today = LocalDate.now();
+
+                        if (birthDate.isAfter(today)) {
+                            JOptionPane.showMessageDialog(null, "Birthdate cannot be in the future.");
+                        } else {
+                            age = Period.between(birthDate, today).getYears();
+                            validDate = true;
+                        }
+                    } catch (DateTimeParseException e) {
+                        JOptionPane.showMessageDialog(null, "Invalid date format. Please use MM/dd/yyyy.");
+                    }
+                }
+
+                if (age <= 0) {
+                    JOptionPane.showMessageDialog(null, "Enter a valid age.");
+                } else if (age >= 1 && age <= 7) {
+                    minorAge++;
+                } else if (age >= 8 && age <= 17) {
+                    adultAge++;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Adult age entered.");
+                    adultAge++;
+                }
+
+            } while (childrenCounter < childrenCount);
+
+            // Final summary
+            int old = guestStaying - childrenCount;
+            JOptionPane.showMessageDialog(null, "Total Guests: " + guestStaying + "\n Adult: " + old + "\n Minor: " + minorAge + " | Young Adult: " + adultAge);
+
+            if (adultAge > 0) {
+                JOptionPane.showMessageDialog(null, "Must avail extra bedding for " + adultAge + " child(ren).");
+            }
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Invalid input. Please enter a number.");
+        }
+    }
+    
+    public static boolean isLocalDestination(String location) {
+    switch (location.toLowerCase()) {
+        case "baguio":
+        case "boracay":
+        case "el nido":
+        case "siargao":
+            return true;
+        case "hong kong":
+        case "japan":
+        case "singapore":
+        case "south korea":
+            return false;
+        default:
+            return false; // Assume international for any unknown
+    }
+}
+
+private static String getSeason(LocalDate date) {
+    MonthDay md = MonthDay.of(date.getMonth(), date.getDayOfMonth());
+
+    // Super Peak Dates
+    if (isBetween(md, MonthDay.of(12, 20), MonthDay.of(12, 31)) || isBetween(md, MonthDay.of(1, 1), MonthDay.of(1, 5)) || // Dec 20 – Jan 5
+        isBetween(md, MonthDay.of(2, 24), MonthDay.of(3, 3)) || // Feb 24 – Mar 3
+        isBetween(md, MonthDay.of(3, 30), MonthDay.of(4, 5))) { // Mar 30 – Apr 5
+        return "Super Peak";
+    }
+
+    // Peak Dates
+    if (isBetween(md, MonthDay.of(3, 4), MonthDay.of(3, 29)) || // Mar 4 – Mar 29
+        isBetween(md, MonthDay.of(4, 6), MonthDay.of(5, 31))) { // Apr 6 – May 31
+        return "Peak";
+    }
+
+    // Lean Dates
+    if (isBetween(md, MonthDay.of(6, 1), MonthDay.of(10, 31))) { // Jun 1 – Oct 31
+        return "Lean";
+    }
+
+    // High Dates
+    if (isBetween(md, MonthDay.of(11, 1), MonthDay.of(12, 19)) || // Nov 1 – Dec 19
+        isBetween(md, MonthDay.of(1, 6), MonthDay.of(2, 23))) {   // Jan 6 – Feb 23
+        return "High";
+    }
+
+    return "Unknown"; // fallback
+}
+
+/**
+ * Helper method to check if a MonthDay falls between two MonthDays inclusive.
+ * Handles wrapping around the end/start of the year.
+ */
+private static boolean isBetween(MonthDay target, MonthDay start, MonthDay end) {
+    if (start.isBefore(end) || start.equals(end)) {
+        // Normal range in same year
+        return !target.isBefore(start) && !target.isAfter(end);
+    } else {
+        // Range wraps around year end (e.g. Dec 20 to Jan 5)
+        return !target.isBefore(start) || !target.isAfter(end);
+    }
+}
+
+
+private static int getRoomRate(String roomType, boolean isLocal, LocalDate checkInDate) {
+    String season = getSeason(checkInDate);
+    Map<String, Map<String, Integer>> localRates = Map.of(
+        "Standard", Map.of("Lean", 2000, "High", 4000, "Peak", 6000, "Super Peak", 9000),
+        "Deluxe", Map.of("Lean", 3000, "High", 5000, "Peak", 8000, "Super Peak", 12000),
+        "Quadruple", Map.of("Lean", 4000, "High", 7000, "Peak", 10000, "Super Peak", 15000),
+        "Family", Map.of("Lean", 5000, "High", 9000, "Peak", 12000, "Super Peak", 18000),
+        "Suite", Map.of("Lean", 6000, "High", 11000, "Peak", 14000, "Super Peak", 21000)
+    );
+
+    Map<String, Map<String, Integer>> intlRates = Map.of(
+        "Standard", Map.of("Lean", 2500, "High", 4500, "Peak", 6500, "Super Peak", 10000),
+        "Deluxe", Map.of("Lean", 5000, "High", 7000, "Peak", 9000, "Super Peak", 13000),
+        "Quadruple", Map.of("Lean", 7500, "High", 9500, "Peak", 11500, "Super Peak", 16000),
+        "Family", Map.of("Lean", 10000, "High", 12000, "Peak", 14000, "Super Peak", 19000),
+        "Suite", Map.of("Lean", 12500, "High", 14500, "Peak", 16500, "Super Peak", 22000)
+    );
+
+    return isLocal ? localRates.get(roomType).get(season) : intlRates.get(roomType).get(season);
+}
+
+public static class RoomBookingResult {
+    private int roomChoice;
+    private int quantity;
+    private int extraBeds;
+    private double totalCost;
+
+    public RoomBookingResult(int roomChoice, int quantity, int extraBeds, double totalCost) {
+        this.roomChoice = roomChoice;
+        this.quantity = quantity;
+        this.extraBeds = extraBeds;
+        this.totalCost = totalCost;
+    }
+
+    public int getRoomChoice() {
+        return roomChoice;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public int getExtraBeds() {
+        return extraBeds;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+}
+
+
+public static void finalReceipt(RoomBookingResult bookingResult, int addonsCost, int amenitiesCost, int numberOfNights) {
+    long nights = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+    StringBuilder receipt = new StringBuilder("--- FINAL RECEIPT ---\n");
+    receipt.append("Stay Duration: ").append(checkInLocalDate).append(" to ").append(checkOutLocalDate).append(" (").append(nights).append(" night(s))\n\n");
+
+    receipt.append("Room Summary:\n");
+    String[] roomTypes = {"Standard", "Deluxe", "Quadruple", "Family", "Suite"};
+
+    int roomChoice = bookingResult.getRoomChoice(); // 1-based index
+    int quantity = bookingResult.getQuantity();
+    int extraBeds = bookingResult.getExtraBeds();
+
+    // Define room rates
+    double[] roomRates = {1000.0, 1500.0, 2000.0, 2500.0, 3000.0}; // Adjust as needed
+    double roomRate = roomRates[roomChoice - 1];
+
+    receipt.append(roomTypes[roomChoice - 1]).append(" x ").append(quantity).append("\n");
+
+    double roomCost = roomRate * quantity * nights;
+    receipt.append("Room Cost: Php ").append(roomCost).append("\n");
+
+    if (extraBeds > 0) {
+        final int EXTRA_BED_COST = 500; // define as constant or move it to a class field
+        receipt.append("Extra Beds: ").append(extraBeds)
+               .append(" x ").append(EXTRA_BED_COST)
+               .append(" x ").append(nights)
+               .append(" = Php ").append(extraBeds * EXTRA_BED_COST * nights).append("\n");
+    }
+
+    receipt.append("Add-ons Cost: Php ").append(addonsCost).append("\n");
+    receipt.append("Amenities Cost: Php ").append(amenitiesCost).append("\n");
+
+    double totalCost = roomCost + totalAddons + amenitiesCost + (extraBeds * 500 * nights); // use same EXTRA_BED_COST
+    receipt.append("TOTAL: Php ").append(totalCost);
+
+    JOptionPane.showMessageDialog(null, receipt.toString());
+}
+
+public static boolean processPayment(double totalAmount) {
+    String[] paymentOptions = {"Cash", "Credit/Debit Card"};
+    int paymentChoice = JOptionPane.showOptionDialog(null, "Choose payment method:", "Payment",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, paymentOptions, paymentOptions[0]);
+
+    if (paymentChoice == 0) { // Cash
+        String cashInput = JOptionPane.showInputDialog("Enter cash amount:");
+        try {
+            double cash = Double.parseDouble(cashInput);
+            if (cash < totalAmount) {
+                JOptionPane.showMessageDialog(null, "Insufficient cash. Payment failed.");
+                return false;
+            } else {
+                JOptionPane.showMessageDialog(null, "Payment successful. Change: Php " + (cash - totalAmount));
+                return true;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Invalid input. Payment failed.");
+            return false;
+        }
+    } else if (paymentChoice == 1) { // Card
+        String cardNumber = JOptionPane.showInputDialog("Enter 16-digit card number:");
+        String cvv = JOptionPane.showInputDialog("Enter 3-digit CVV:");
+
+        if (cardNumber != null && cardNumber.matches("\\d{16}") && cvv != null && cvv.matches("\\d{3}")) {
+            JOptionPane.showMessageDialog(null, "Php " + totalAmount + " has been deducted from card ending in " + cardNumber.substring(12));
+            return true;
+        } else {
+            JOptionPane.showMessageDialog(null, "Invalid card details. Payment failed.");
+            return false;
+        }
+    }
+    return false;
+}
+
+public static void displayBookingSummary(String name, String cpNumber, RoomBookingResult bookingResult,LocalDate checkInLocalDate, LocalDate checkoutlLocalDate,String location, int addonsCost, int amenitiesCost) {
+
+        String[] roomTypes = {"Standard", "Deluxe", "Quadruple", "Family", "Suite"};
+        double[] roomRates = {1000.0, 1500.0, 2000.0, 2500.0, 3000.0};
+
+        int roomChoice = bookingResult.getRoomChoice(); // 1-based
+        int quantity = bookingResult.getQuantity();
+        int extraBeds = bookingResult.getExtraBeds();
+    
+        String roomType = roomTypes[roomChoice - 1];
+        double roomRate = roomRates[roomChoice - 1];
+
+        long nights = ChronoUnit.DAYS.between(checkInLocalDate, checkoutlLocalDate);
+        if (nights == 0) nights = 1; // Minimum 1 night
+
+        double roomCost = roomRate * quantity * nights;
+        double extraBedCost = extraBeds * 500 * nights;
+        double totalCost = roomCost + extraBedCost + addonsCost + amenitiesCost;
+
+        StringBuilder summary = new StringBuilder("=========== BOOKING SUMMARY ===========\n");
+        summary.append(String.format("Guest Name        : %s%n", name));
+        summary.append(String.format("Destination       : %s%n", location));
+        summary.append(String.format("No. of Guests     : %s%n", cpNumber));
+        summary.append(String.format("Check-in Date     : %s%n", checkInLocalDate));
+        summary.append(String.format("Check-out Date    : %s%n", checkoutlLocalDate));
+        summary.append(String.format("Duration          : %d night(s)%n", nights));
+        summary.append("----------------------------------------\n");
+        summary.append("Room Details:\n");
+        summary.append(String.format("Room Type         : %s x %d @ Php %.2f/night%n", roomType, quantity, roomRate));
+        summary.append(String.format("Room Cost         : Php %.2f%n", roomCost));
+        if (extraBeds > 0) {
+            summary.append(String.format("Extra Beds        : %d x Php 500 x %d nights = Php %.2f%n",
+                    extraBeds, nights, extraBedCost));
+        }
+        summary.append(String.format("Add-ons Cost      : Php %.2f%n", (double) addonsCost));
+        summary.append(String.format("Amenities Cost    : Php %.2f%n", (double) amenitiesCost));
+        summary.append("----------------------------------------\n");
+        summary.append(String.format("TOTAL ESTIMATE    : Php %.2f%n", totalCost));
+        summary.append("========================================");
+
+        JOptionPane.showMessageDialog(null, summary.toString(), "Booking Summary", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+public static String getPhoneNumber() {
+    String phone;
+
+    while (true) {
+        phone = JOptionPane.showInputDialog(null, "Please enter your phone number (11 digits):");
+        
+        if (phone == null) {
+            // User pressed Cancel or closed the dialog
+            JOptionPane.showMessageDialog(null, "Input cancelled.");
+            return null;
+        }
+
+        if (phone.matches("\\d{11}")) {
+            JOptionPane.showMessageDialog(null, "Phone number accepted.");
+            return phone;
+        } else {
+            JOptionPane.showMessageDialog(null,
+                    "Invalid input.\nMake sure it's exactly 11 digits and contains only numbers.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
+
+
+public static boolean checkCustomerAge() {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+    while (true) {
+        String input = JOptionPane.showInputDialog(null, "Enter your birthdate (MM/dd/yyyy):");
+
+        if (input == null) {
+            JOptionPane.showMessageDialog(null, "Input cancelled.");
+            return false; // Cancel booking
+        }
+
+        try {
+            LocalDate birthdate = LocalDate.parse(input, formatter);
+            LocalDate today = LocalDate.now();
+            int age = Period.between(birthdate, today).getYears();
+
+            if (age >= 18) {
+                JOptionPane.showMessageDialog(null, "Age verified. You are eligible to book.");
+                return true; // Continue booking
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "Booking denied. You must be at least 18 years old to continue.",
+                        "Underage", JOptionPane.ERROR_MESSAGE);
+                return false; // Cancel booking
+            }
+
+        } catch (DateTimeParseException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Invalid date format. Please enter your birthdate as MM/dd/yyyy (e.g., 06/03/2005).",
+                    "Invalid Format", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+}
+   		public static void main(String [] args) 
+   		{
+
+			String location, name, pwdAssistanceInfo;
+			int pwdAssistance, childrenCount, book, guestStaying, childrenAge;
+			int childrenCounter;
+            int availableStandard = 5;
+            int availableDeluxe = 4;
+            int availableQuadruple = 5;
+            int availableFamily = 3;
+            int availableSuite = 2;
+            String cpNumber = "";
+
+            book = JOptionPane.YES_OPTION;
+			location = "";
+            name = "";
+            guestStaying = 0;
+			childrenCount = 0;
+			childrenAge = 0;
+			childrenCounter = 0;
+			int minorAge = 0;
+			int adultAge = 0;
+            boolean validBooking = false;
+            double totalCost = 0;
+
+
+			//input
+			//ASK FOR THE LOCATION OF CHECK IN
+			//CHECK IN
+
+            if (!checkCustomerAge()) {
+            System.exit(0); // or return if inside a method
+            }
+
+			book = JOptionPane.showConfirmDialog(null, "Would you like to book", "Booking Hotel",JOptionPane.YES_NO_OPTION);
+
+
+			while (book == JOptionPane.YES_OPTION) 
+            {
+				boolean validLocation = false;
+						
+				while (!validLocation) 
+                {
+					location = JOptionPane.showInputDialog(null, "Where would you like to go?\nSupported Locations:\nLocal:        International:\nBaguio      Hongkong\nBoracay     Japan\nEl Nido     Singapore\nSiargao     South Korea", "Lanlya Star Hotel Booking", JOptionPane.QUESTION_MESSAGE);
+			
+
+					//CANCEL BUTTON
+					if (location == null) 
+                    {
+						break;
+					}
+			
+					switch (location.toLowerCase()) 
+                    {
+						case "baguio":
+						case "boracay":
+						case "el nido":
+						case "siargao":
+						case "hong kong":
+						case "japan":
+						case "singapore":
+						case "south korea":
+							validLocation = true;
+							JOptionPane.showMessageDialog(null, "You have selected: " + location);
+							break;
+						default:
+							JOptionPane.showMessageDialog(null, "Invalid location. Please choose a valid destination.");
+                        }
+                    }
+
+                boolean isLocal = isLocalDestination(location);   
+                    
+            do {
+                bookingIn();
+                bookingOut();
+                
+                if (isBookingWithinOneYear()) 
+                {
+                    calculateBookingDuration(); // success
+                    validBooking = true;       // exit the loop
+                }
+
+                if (!validBooking)
+                {
+                    JOptionPane.showMessageDialog(null, "Overlapping dates. Try again.");
+                }
+                
+
+            } while (!validBooking);
+                int daysBetween = (int) ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+			//Asks for the staying Guests
+//            do {
+                
+                guestStaying = Integer.parseInt(JOptionPane.showInputDialog(null, "How many guests are staying?"));
+
+//            }while (guestStaying != 0);
+
+            
+            processChildren(guestStaying);
+            
+			RoomBookingResult bookingResult;
+
+            //Rooms5
+            do {
+
+            bookingResult = selectRoomBasedOnGuests(guestStaying, isLocal, checkInLocalDate, availableStandard, availableDeluxe, availableQuadruple, availableFamily, availableSuite);
+
+            if (bookingResult != null) {
+            // Access result.roomChoice, result.roomsBooked, result.extraBeds, result.totalRoomCost
+            JOptionPane.showMessageDialog(null, "Booking successful!");
+            } else {
+            JOptionPane.showMessageDialog(null, "Room booking failed or cancelled.");
+            }
+
+            } while (bookingResult == null);
+
+
+            int addonsCost = 0;
+            int amenitiesCost = 0;
+
+            int addonsConfirmation = JOptionPane.showConfirmDialog(null, "Avail Add-ons?", "Add-ons", JOptionPane.YES_NO_OPTION);
+            if (addonsConfirmation == JOptionPane.YES_OPTION) 
+            {
+                addonsCost = addons(guestStaying);
+            }
+            
+
+            int amenitiesConfirmation = JOptionPane.showConfirmDialog(null, "Avail Amenities?", "Amenities", JOptionPane.YES_NO_OPTION);
+            if (amenitiesConfirmation == JOptionPane.YES_OPTION) 
+            {
+                amenitiesCost = amenities(guestStaying, daysBetween);
+            }
+
+			pwdAssistance = JOptionPane.showConfirmDialog(null,"Does the room need to be PWD friendly room?", "Set PWD friendly room", JOptionPane.YES_NO_OPTION);
+			name = JOptionPane.showInputDialog(null, "What will be the name for the booking? ");
+            cpNumber = getPhoneNumber();
+			JOptionPane.showMessageDialog(null, "Welcome to Hotel Transelvania. Please enjoy your Stay <3");
+			pwdAssistanceInfo = "No response provided";
+            pwdAssistance = 0;
+			if (pwdAssistance == 0) 
+			{
+				pwdAssistanceInfo = "Assisting your room for pwd assistance";
+			}
+			
+			if (pwdAssistance == 1)
+			{
+				pwdAssistanceInfo = "Without any need of special assistance";
+			}
+           
+            
+            //Computation
+
+            //date
+            //guest
+            //bed
+            //ammenities
+
+			
+			//output
+			/*JOptionPane.showMessageDialog(null, "Hello, Welcome to Hotel Tanselvania " + name + 
+			"\n You would like to go to " + location + " on " + checkInDate + " " + seasonIn + " and leave on " + checkOutDate + " " + seasonOut + " with " + guestStaying
+			+ " \n guest staying with " + childrenCount + " children" + " and " + " no of rooms " + pwdAssistanceInfo + ".");
+
+            
+
+
+int totalExtras = totalAddons + totalAmenities;
+JOptionPane.showMessageDialog(null, 
+    "Summary of Charges:\n" +
+    "Add-ons: Php " + totalAddons + "\n" +
+    "Amenities: Php " + totalAmenities + "\n" +
+    "Total Extra Charges: Php " + totalExtras);
+*/
+            
+
+            finalReceipt(bookingResult, addonsCost, amenitiesCost, daysBetween);
+            processPayment(totalCost);
+            displayBookingSummary(name, cpNumber, bookingResult, checkInLocalDate, checkOutLocalDate, location, addonsCost, amenitiesCost);
+			break;	
+        }
+    }
+}
