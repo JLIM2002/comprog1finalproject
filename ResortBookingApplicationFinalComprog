@@ -1,10 +1,8 @@
  /*
  * Resort booking application
- * Version: 3
+ * Version: 5
  * Authors: Jeremy Lim, Czybelle Ombao, April Cagungun, Mylene Cortez 
  */
-
-
 
 import java.io.*;
 import javax.swing.*;
@@ -23,7 +21,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.time.LocalDate;
 
-
 	public class ResortBookingApplicationFinalComprog
 	{
         static String checkInDate = "";
@@ -39,9 +36,9 @@ import java.time.LocalDate;
         static int totalAddons = 0;
         static int totalAmenities = 0;
         static int extraBedsUsed = 0;
-        static RoomBookingResult bookingResult2;
+        static RoomBookingResult bookingResult;
 
-        public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("mm/dd/yyyy");
 
         static Map<String, Integer> extraBedsPerRoom = new HashMap<>();
         static Map<String, Integer> nightCounts = new HashMap<>();
@@ -53,7 +50,6 @@ import java.time.LocalDate;
         "Peak", 5000,
         "Super Peak", 6000
         );
-
 
 public static boolean isValidDate(int month, int day, int year) {
     // Check for a reasonable future year
@@ -81,7 +77,6 @@ public static boolean isValidDate(int month, int day, int year) {
     }
 }
 
-
     // checkin
     public static void bookingIn() {
         int yearIn;
@@ -97,8 +92,8 @@ public static boolean isValidDate(int month, int day, int year) {
 
                 if (validDate) {
                     checkInLocalDate = LocalDate.of(yearIn, monthIn, dayIn);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                     String checkInDate = checkInLocalDate.format(formatter);
-
                     
                     int confirm = JOptionPane.showConfirmDialog(null, "You entered: " + checkInDate + 
                         "\nConfirm booking date?", "Confirm Date", JOptionPane.YES_NO_OPTION);
@@ -115,8 +110,6 @@ public static boolean isValidDate(int month, int day, int year) {
             }
         } while (!validDate);
     }
-
-
     //checkout
 public static void bookingOut() {
         int yearOut;
@@ -131,6 +124,7 @@ public static void bookingOut() {
                 validDate = isValidDate(monthOut, dayOut, yearOut);
 
                 if (validDate) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                     checkOutLocalDate = LocalDate.of(yearOut, monthOut, dayOut);
                     String checkOutDate = checkOutLocalDate.format(formatter);
 
@@ -149,7 +143,6 @@ public static void bookingOut() {
             }
         } while (!validDate);
     }
-   
 
 public static RoomBookingResult selectRoomBasedOnGuests(int guestStaying, boolean isLocal, LocalDate checkInDate, int standard, int deluxe, int quadruple, int family, int suite) {
     String[] roomNames = {"Standard", "Deluxe", "Quadruple", "Family", "Suite"};
@@ -216,7 +209,6 @@ public static RoomBookingResult selectRoomBasedOnGuests(int guestStaying, boolea
 
     return new RoomBookingResult(roomChoice, quantity, extraBeds, totalCost);
 }
-
 
 public static int addons(int guestStaying) 
 {
@@ -318,7 +310,6 @@ public static int addons(int guestStaying)
 
     return totalAddons;
 }
-
 
 public static int amenities(int guestStaying, long daysBetween) {
     int swimCount = 0;
@@ -426,9 +417,9 @@ public static int amenities(int guestStaying, long daysBetween) {
     return total;
 }
 
-
 public static void calculateBookingDuration() {
         if (checkInLocalDate != null && checkOutLocalDate != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
             long daysBetween = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
 
             if (daysBetween > 0) {
@@ -466,7 +457,6 @@ public static void calculateBookingDuration() {
                 "Error: Please ensure both check-in and check-out dates are set.");
         }
     }
-
 
     public static boolean isBookingWithinOneYear() 
     {
@@ -603,20 +593,13 @@ private static String getSeason(LocalDate date) {
     return "Unknown"; // fallback
 }
 
-/**
- * Helper method to check if a MonthDay falls between two MonthDays inclusive.
- * Handles wrapping around the end/start of the year.
- */
 private static boolean isBetween(MonthDay target, MonthDay start, MonthDay end) {
     if (start.isBefore(end) || start.equals(end)) {
-        // Normal range in same year
         return !target.isBefore(start) && !target.isAfter(end);
     } else {
-        // Range wraps around year end (e.g. Dec 20 to Jan 5)
         return !target.isBefore(start) || !target.isAfter(end);
     }
 }
-
 
 private static int getRoomRate(String roomType, boolean isLocal, LocalDate checkInDate) {
     String season = getSeason(checkInDate);
@@ -669,21 +652,19 @@ public static class RoomBookingResult {
     }
 }
 
-
-public static void finalReceipt(RoomBookingResult bookingResult, int addonsCost, int amenitiesCost, int numberOfNights) {
-    long nights = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+public static double finalReceipt(RoomBookingResult bookingResult, int addonsCost, int amenitiesCost, int numberOfNights, boolean isSeniorDiscount) {
+    long nights = numberOfNights;
     StringBuilder receipt = new StringBuilder("--- FINAL RECEIPT ---\n");
     receipt.append("Stay Duration: ").append(checkInLocalDate).append(" to ").append(checkOutLocalDate).append(" (").append(nights).append(" night(s))\n\n");
 
     receipt.append("Room Summary:\n");
     String[] roomTypes = {"Standard", "Deluxe", "Quadruple", "Family", "Suite"};
 
-    int roomChoice = bookingResult.getRoomChoice(); // 1-based index
+    int roomChoice = bookingResult.getRoomChoice();
     int quantity = bookingResult.getQuantity();
     int extraBeds = bookingResult.getExtraBeds();
 
-    // Define room rates
-    double[] roomRates = {1000.0, 1500.0, 2000.0, 2500.0, 3000.0}; // Adjust as needed
+    double[] roomRates = {1000.0, 1500.0, 2000.0, 2500.0, 3000.0};
     double roomRate = roomRates[roomChoice - 1];
 
     receipt.append(roomTypes[roomChoice - 1]).append(" x ").append(quantity).append("\n");
@@ -691,31 +672,41 @@ public static void finalReceipt(RoomBookingResult bookingResult, int addonsCost,
     double roomCost = roomRate * quantity * nights;
     receipt.append("Room Cost: Php ").append(roomCost).append("\n");
 
+    double extraBedCost = 0;
     if (extraBeds > 0) {
-        final int EXTRA_BED_COST = 500; // define as constant or move it to a class field
+        final int EXTRA_BED_COST = 500;
+        extraBedCost = extraBeds * EXTRA_BED_COST * nights;
         receipt.append("Extra Beds: ").append(extraBeds)
                .append(" x ").append(EXTRA_BED_COST)
                .append(" x ").append(nights)
-               .append(" = Php ").append(extraBeds * EXTRA_BED_COST * nights).append("\n");
+               .append(" = Php ").append(extraBedCost).append("\n");
     }
 
     receipt.append("Add-ons Cost: Php ").append(addonsCost).append("\n");
     receipt.append("Amenities Cost: Php ").append(amenitiesCost).append("\n");
 
-    double totalCost = roomCost + totalAddons + amenitiesCost + (extraBeds * 500 * nights); // use same EXTRA_BED_COST
-    receipt.append("TOTAL: Php ").append(totalCost);
+    double totalCost = roomCost + extraBedCost + addonsCost + amenitiesCost;
+
+    if (isSeniorDiscount == true) {
+        receipt.append("Senior Citizen Discount: 20%\n");
+        totalCost *= 0.8;
+    }
+
+    receipt.append("TOTAL: Php ").append(String.format("%.2f", totalCost));
 
     JOptionPane.showMessageDialog(null, receipt.toString());
+    return totalCost;
 }
 
 public static boolean processPayment(double totalAmount) {
     String[] paymentOptions = {"Cash", "Credit/Debit Card"};
     int paymentChoice = JOptionPane.showOptionDialog(null, "Choose payment method:", "Payment",
             JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, paymentOptions, paymentOptions[0]);
-
     if (paymentChoice == 0) { // Cash
         String cashInput = JOptionPane.showInputDialog("Enter cash amount:");
+         
         try {
+            
             double cash = Double.parseDouble(cashInput);
             if (cash < totalAmount) {
                 JOptionPane.showMessageDialog(null, "Insufficient cash. Payment failed.");
@@ -769,19 +760,9 @@ public static void displayBookingSummary(String name, String cpNumber, RoomBooki
         summary.append(String.format("Check-in Date     : %s%n", checkInLocalDate));
         summary.append(String.format("Check-out Date    : %s%n", checkoutlLocalDate));
         summary.append(String.format("Duration          : %d night(s)%n", nights));
-        summary.append("----------------------------------------\n");
         summary.append("Room Details:\n");
-        summary.append(String.format("Room Type         : %s x %d @ Php %.2f/night%n", roomType, quantity, roomRate));
-        summary.append(String.format("Room Cost         : Php %.2f%n", roomCost));
-        if (extraBeds > 0) {
-            summary.append(String.format("Extra Beds        : %d x Php 500 x %d nights = Php %.2f%n",
-                    extraBeds, nights, extraBedCost));
-        }
-        summary.append(String.format("Add-ons Cost      : Php %.2f%n", (double) addonsCost));
-        summary.append(String.format("Amenities Cost    : Php %.2f%n", (double) amenitiesCost));
-        summary.append("----------------------------------------\n");
-        summary.append(String.format("TOTAL ESTIMATE    : Php %.2f%n", totalCost));
-        summary.append("========================================");
+        summary.append(String.format("Room Type         : %s%n", roomType));
+                summary.append("----------------------------------------\n");
 
         JOptionPane.showMessageDialog(null, summary.toString(), "Booking Summary", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -794,6 +775,7 @@ public static String getPhoneNumber() {
         
         if (phone == null) {
             // User pressed Cancel or closed the dialog
+    
             JOptionPane.showMessageDialog(null, "Input cancelled.");
             return null;
         }
@@ -808,7 +790,6 @@ public static String getPhoneNumber() {
         }
     }
 }
-
 
 public static boolean checkCustomerAge() {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -866,7 +847,7 @@ public static boolean checkCustomerAge() {
 			int minorAge = 0;
 			int adultAge = 0;
             boolean validBooking = false;
-            double totalCost = 0;
+            int discoutSC = 0;
 
 
 			//input
@@ -876,6 +857,9 @@ public static boolean checkCustomerAge() {
             if (!checkCustomerAge()) {
             System.exit(0); // or return if inside a method
             }
+
+            int discountSC = JOptionPane.showConfirmDialog(null, "Avail Senior Citizen Discount? \nShow card at reception", "Avail Senior Citizen Discount", JOptionPane.YES_NO_OPTION);
+            boolean isSeniorDiscount = (discountSC == JOptionPane.YES_OPTION);
 
 			book = JOptionPane.showConfirmDialog(null, "Would you like to book", "Booking Hotel",JOptionPane.YES_NO_OPTION);
 
@@ -991,35 +975,11 @@ public static boolean checkCustomerAge() {
 			{
 				pwdAssistanceInfo = "Without any need of special assistance";
 			}
-           
-            
-            //Computation
-
-            //date
-            //guest
-            //bed
-            //ammenities
-
-			
-			//output
-			/*JOptionPane.showMessageDialog(null, "Hello, Welcome to Hotel Tanselvania " + name + 
-			"\n You would like to go to " + location + " on " + checkInDate + " " + seasonIn + " and leave on " + checkOutDate + " " + seasonOut + " with " + guestStaying
-			+ " \n guest staying with " + childrenCount + " children" + " and " + " no of rooms " + pwdAssistanceInfo + ".");
-
             
 
-
-int totalExtras = totalAddons + totalAmenities;
-JOptionPane.showMessageDialog(null, 
-    "Summary of Charges:\n" +
-    "Add-ons: Php " + totalAddons + "\n" +
-    "Amenities: Php " + totalAmenities + "\n" +
-    "Total Extra Charges: Php " + totalExtras);
-*/
-            
-
-            finalReceipt(bookingResult, addonsCost, amenitiesCost, daysBetween);
+            double totalCost = finalReceipt(bookingResult, addonsCost, amenitiesCost, daysBetween, isSeniorDiscount);
             processPayment(totalCost);
+
             displayBookingSummary(name, cpNumber, bookingResult, checkInLocalDate, checkOutLocalDate, location, addonsCost, amenitiesCost);
 			break;	
         }
